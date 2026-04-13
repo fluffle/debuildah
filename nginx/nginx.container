@@ -1,0 +1,35 @@
+[Unit]
+Description=nginx
+
+[Container]
+ContainerName=nginx
+# Pull newer versions of the copied image archive when restarting
+Image=oci-archive:/srv/images/nginx.oci
+Pull=newer
+# Storage: container image is ro except /run and /var/lib/nginx volume
+ReadOnly=true
+ReadOnlyTmpfs=true
+Volume=/srv/nginx/conf.d:/etc/nginx/conf.d:ro
+Volume=/srv/nginx/certs.d:/etc/nginx/certs.d:ro
+Volume=/srv/nginx/www:/srv/nginx/html:ro
+Volume=/srv/nginx/tmp:/var/lib/nginx:rw
+# Network; note use of high port inside container
+Network=podman-v6.network
+PublishPort=80:8080/tcp
+PublishPort=443:8443/tcp
+# System integration
+# map root uid/gid 0 -> 65534 (nobody) on host
+UIDMap=0:65534:1
+GIDMap=0:65534:1
+# map nonroot uid/gid 65532 -> 80 (nginx) on host
+UIDMap=65532:80:1
+GIDMap=65532:80:1
+# Needs newer podman version I think?
+# ReloadSignal=SIGHUP
+
+
+[Service]
+Restart=always
+
+[Install]
+WantedBy=multi-user.target default.target

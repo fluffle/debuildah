@@ -1,0 +1,174 @@
+# dl_extract grabs the supplied debian package from the apt servers and
+# extracts it to the current directory. Assumes that $PWD is the root of a
+# mounted working container.
+dl_extract() {
+  local package="$1"
+  echo "fetch: $package" >&2
+  apt-get -qq $repo download "${package}" 2>/dev/null
+  dpkg-deb -x "${package}"*.deb .
+  rm "${package}"*.deb
+}
+
+# install_pkgs installs a list of debian packages.
+# Assumes that $PWD is the root of the mounted working container.
+install_pkgs() {
+  local -a packages=("$@")
+  for pkg in "${packages[@]}"; do
+    dl_extract "$pkg"
+  done
+}
+
+# pkg_version prints the version of a particular debian package
+pkg_version() {
+  local package="$1"
+  apt-cache showpkg "$package" | sed -n '/^Versions:/{n; s/ .*//p; q}'
+}
+
+# write_versions writes the current version for all provided packages to a
+# file "${package}.versions" in the current directory. This works with
+# check_versions below, when the version files are checked into git, to
+# provide very basic avoidance of rebuilding containers where nothing has
+# changed in the dependent packages.
+write_versions() {
+  local package="$1"; shift
+  local -a packages=("$@")
+  for pkg in "${packages[@]}"; do
+    version="$(pkg_version "$pkg")"
+    echo "${pkg}=${version}"
+  done > "${package}.versions"
+}
+
+# check_versions prompts to check whether the user wants to rebuild a container
+# when none of the package versions have changed, according to git.
+# Assumes that you check your build scripts into git and .gitignore *.oci ;-)
+check_versions() {
+  local package="$1"
+  if git diff --quiet "${package}.versions"; then
+    read -p "No version diffs, continue with build? " -n 1 -r
+    echo
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then return 1; fi
+  else
+    echo "Changes:"
+    git diff -U0 "${package}.versions" |
+      grep '^[+-]' | grep -v '^---' | grep -v '^+++'
+  fi
+  return 0
+}
+
+# version_check is a shorthand for writing out all the package versions
+# found when building a particular container, then using git to check
+# whether any of them have changed.
+version_check() {
+  write_versions "$@"
+  check_versions "$1"
+}
+
+# deps lists the direct dependencies of a given debian package matching
+# the provided regular expression.
+deps() {
+  local package="$1"
+  local match="$2"
+  apt-cache depends \
+    --no-pre-depends \
+    --no-recommends \
+    --no-suggests \
+    --no-conflicts \
+    --no-breaks \
+    --no-replaces \
+    --no-enhances \
+    "$package" |
+    # When encountering virtual packages apt-cache prints the chosen "real"
+    # package prepended with a | before the virtual one, so we just accept
+    # that line instead of trying to do our own virtual package resolution.
+    grep "^ [| ]Depends: \\($match\\)" |
+    awk '{print $2}' |
+    grep -v '^<.*>$'
+}
+
+# deps_recurse performs a breadth-first searhc through the list of packages
+# looking for direct dependencies that match the supplied regular expression.
+# It then checks the dependencies of those dependencies, and so on, returning
+# a sorted list of debian packages that need to be installed in a container.
+deps_recurse() {
+  local match="$1"; shift
+  local -a queue=("$@")
+  local -A pkgs
+  for pkg in "${queue[@]}"; do
+    pkgs[$pkg]="$pkg"
+  done
+  while [[ ${#queue[@]} -gt 0 ]]; do
+    local pkg="${queue[0]}"
+	queue=("${queue[@]:1}")
+    for dep in $(deps "$pkg" "$match"); do
+	  # break cyclic dep graphs, don't queue seen things
+	  if [[ -n "${pkgs["$dep"]}" ]]; then continue; fi
+      queue+=("$dep")
+	  pkgs[$dep]="$dep"
+    done
+  done
+  (for pkg in "${pkgs[@]}"; do echo "$pkg"; done) | sort
+}
+
+# libs_recurse is a shorthand because 99% of the time we only need to install
+# library dependencies in a container to get a particular package running.
+libs_recurse() {
+  deps_recurse "lib" "$@"
+}
+
+filter_base_deps() {
+  # distroless base contains these 4 debian packages
+  grep -v '^\(libc6\|libssl3t64\|libzstd1\|zlib1g\)$'
+}
+
+# from_base creates a new working container and returns its id.
+# working containers are built on top of distroless/base-debian13.
+from_base() {
+  local tag="${1:-latest}"
+  local ctr="$(buildah from --pull "gcr.io/distroless/base-debian13:${tag}")"
+  echo "$ctr"
+}
+
+# commit turns the working container image "$ctr" into an OCI archive.
+# The archive is named "${name}.oci" in the cwd and tagged with "$version".
+commit() {
+  local ctr="$1"
+  local name="$2"
+  local version="$3"
+  buildah config \
+    --author "${DEBUILDAH_AUTHOR:-a.bramley@gmail.com}" \
+    --created-by "debuildah" \
+    --annotation "org.opencontainers.image.title=${name}" \
+    --annotation "org.opencontainers.image.version=${version}" \
+    "$ctr"
+  buildah unmount "$ctr"
+  # Image tags can only contain these chars; debian versions have + in...
+  tag="$(tr -c 'a-z0-9\n_.-' '_' <<<"${version}")"
+  buildah commit \
+    --quiet \
+    --rm \
+    "$ctr" \
+    "oci-archive:${name}.oci:${name}:${tag}"
+}
+
+# busybox installs static busybox and creates symlinks for all enabled tools
+# assumes $PWD is the root of the mounted container image
+# assumes being run under `buildah unshare`
+busybox() {
+  dl_extract busybox-static
+  (cd usr/bin; for i in $(./busybox --list | grep -v "busybox") ; do ln -sf busybox $i ; done)
+}
+
+
+# entrypoint formats a bash array as a JSON array for the --entrypoint flag.
+entrypoint() {
+  local first="$1"; shift
+  local -a rest=("$@")
+  if [[ -z "$first" ]]; then printf '[]'; return; fi
+
+  printf '["%s"' "$first"
+
+  for flag in "${rest[@]}"; do
+    printf ', "%s"' "$flag"
+  done
+  printf ']'
+}

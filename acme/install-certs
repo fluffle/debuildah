@@ -1,0 +1,247 @@
+#! /usr/bin/python3
+# vim: set filetype=python
+
+import argparse
+import grp
+import hashlib
+import logging
+import os
+import pathlib
+import pwd
+import shlex
+import shutil
+import subprocess
+import sys
+import tomllib
+
+HELP='''
+Installs certificates based on TOML config files in /srv dirs.
+
+TOML files should be named install-certs.toml and have two sections:
+
+```
+[config]
+owner = "user" or uid
+group = "group" or gid
+reload = "command to run to reload service"
+
+[certs]
+# certdir/source is under /srv/acme/
+# destination is filename under /srv/<dir>/certs.d/
+"certdir/source1" = "destination1"
+"certdir/source2" = "destination2"
+... etc
+```
+'''
+
+LOG = logging.getLogger('install-certs')
+
+SRC = pathlib.Path('/srv/acme')
+
+class ConfigError(Exception):
+  def __init__(self, err):
+    self.err = err
+
+
+class CopyError(Exception):
+  def __init__(self, err):
+    self.err = err
+
+
+class Config:
+  def __init__(self, path, dry_run):
+    self.path = path
+    self.dry_run = dry_run
+    self.certdir = path.parent / 'certs.d'
+    if not (self.certdir.exists() and self.certdir.is_dir()):
+      raise ConfigError(f'config {toml} does not have {toml.parent}/certs.d dir')
+
+    with open(path, "rb") as fh:
+      cfg = tomllib.load(fh)
+
+    self._validate(cfg)
+    self.owner = self._get_owner(cfg)
+    self.group = self._get_group(cfg)
+    self.reload = self._get_reload(cfg)
+    self.certs = cfg['certs']
+
+  def _validate_config(self, cfg, param):
+    if (param not in cfg['config']
+        or not isinstance(cfg['config'][param], str|int)
+        or not cfg['config'][param]):
+      raise ConfigError(f'{self.path} [config] does not contain valid {param}=')
+
+  def _validate(self, cfg):
+    if 'config' not in cfg or not isinstance(cfg['config'], dict):
+      raise ConfigError(f'{self.path} does not contain a [config] section')
+
+    self._validate_config(cfg, 'owner')
+    self._validate_config(cfg, 'group')
+    self._validate_config(cfg, 'reload')
+
+    if 'certs' not in cfg or not isinstance(cfg['certs'], dict):
+      raise ConfigError(f'{self.path} does not contain a [certs] section')
+
+    if not cfg['certs']:
+      raise ConfigError(f'{self.path} [certs] section is empty')
+
+  def _get_owner(self, cfg):
+    owner = cfg['config']['owner']
+    get_func = pwd.getpwnam
+    if isinstance(owner, int):
+      get_func = pwd.getpwuid
+    try:
+      passwd = get_func(owner)
+      return passwd.pw_uid
+    except pwd.KeyError:
+      raise ConfigError(f'{self.path} [config] owner={owner} does not exist')
+
+  def _get_group(self, cfg):
+    group = cfg['config']['group']
+    get_func = grp.getgrnam
+    if isinstance(group, int):
+      get_func = grp.getgrgid
+    try:
+      groupwd = get_func(group)
+      return groupwd.gr_gid
+    except pwd.KeyError:
+      raise ConfigError(f'{self.path} [config] group={group} does not exist')
+
+  def _get_reload(self, cfg):
+    parts = shlex.split(cfg['config']['reload'])
+    exe = parts.pop(0)
+    fqexe = shutil.which(exe, path=os.pathsep.join(['/usr/sbin', '/usr/bin']))
+    if not fqexe:
+      raise ConfigError(f'{self.path} [config] reload command {exe} not in path')
+    return [fqexe] + parts
+
+  def resolve(self, stem, relpath):
+      abspath = stem / relpath
+      abspath = abspath.resolve()
+      if not abspath.is_relative_to(stem):
+        raise CopyError(f'resolved path {abspath} is not relative to {stem}')
+      return abspath
+
+  def hashes_equal(self, src, dst):
+    with open(src, 'rb') as fh:
+      srchash = hashlib.file_digest(fh, 'sha256')
+    with open(dst, 'rb') as fh:
+      dsthash = hashlib.file_digest(fh, 'sha256')
+    return srchash.digest() == dsthash.digest()
+
+  def copy(self, src, dst):
+    if dst.exists() and self.hashes_equal(src, dst):
+      return False
+    LOG.info(f'copying {src} to {dst}, dry_run={self.dry_run}')
+    if self.dry_run:
+      return True
+    shutil.copyfile(src, dst, follow_symlinks=False)
+    return True
+
+  def permissions(self, dst):
+    stat = dst.stat(follow_symlinks=False)
+    if ((stat.st_mode & 0o777) == 0o400
+        and stat.st_uid == self.owner
+        and stat.st_gid == self.group):
+      return False
+    LOG.info(f'setting permissions on {dst}, uid={self.owner} gid={self.group} mode=0400 dry_run={self.dry_run}')
+    if self.dry_run:
+      return True
+    os.chown(dst, self.owner, self.group, follow_symlinks=False)
+    os.chmod(dst, 0o400, follow_symlinks=False)
+    return True
+
+  def reload_service(self):
+    cmd = shlex.join(self.reload)
+    LOG.info(f'running command {cmd}, dry_run={self.dry_run}')
+    if self.dry_run:
+      return
+    out = subprocess.run(self.reload, capture_output=True)
+    if out.stdout:
+      LOG.info(f'stdout:\n{out.stdout}\n')
+    if out.stderr:
+      LOG.info(f'stderr:\n{out.stderr}\n')
+    out.check_returncode()
+
+  def copy_certs(self):
+    changed = False
+    LOG.info(f'installing certs in {self.certdir}, dry_run={self.dry_run}')
+    for relsrc, reldst in self.certs.items():
+      src = self.resolve(SRC, relsrc)
+      dst = self.resolve(self.certdir, reldst)
+      if not src:
+        raise CopyError(f'could not resolve source path {SRC}/{relsrc}')
+      if not dst:
+        raise CopyError(f'could not resolve destination path {self.certdir}/{reldst}')
+      if not src.exists():
+        raise CopyError(f'resolved source path {src} does not exist')
+      if self.copy(src, dst) or self.permissions(dst):
+        changed = True
+      else:
+        LOG.info(f'{src} already matches {dst}, skipping')
+
+    if changed:
+      LOG.info(f'{self.certdir} has new or updated certs, triggering reload')
+      self.reload_service()
+    else:
+      LOG.info(f'{self.certdir} has no new or updated certs')
+
+
+def parse_args():
+  parser = argparse.ArgumentParser(
+      prog='install-certs',
+      description=HELP,
+  )
+  parser.add_argument('--apply', action='store_true',
+    help='Actually install certs rather than just pretending.')
+  return parser.parse_args()
+
+
+def should_apply(args):
+  if args.apply:
+    if os.geteuid() == 0:
+      return True
+    else:
+      LOG.warning('Not running as root, --apply will do nothing.')
+  return False
+
+
+def main():
+  logging.basicConfig(
+    stream=sys.stderr,
+    level=logging.INFO,
+    style='{',
+    format='{levelname}: {message}',
+  )
+  args = parse_args()
+  apply = should_apply(args)
+
+  srv = pathlib.Path('/srv')
+  files = list(srv.glob('*/install-certs.toml'))
+  if not files:
+    LOG.info(f'no install-certs.toml files found under {SRC}, exiting')
+    sys.exit(0)
+
+  for toml in files:
+    try:
+      cfg = Config(toml, dry_run=not apply)
+    except tomllib.TOMLDecodeError as e:
+      LOG.error(f'parsing {toml} failed: {e}')
+      continue
+    except ConfigError as e:
+      LOG.error(f'configuration error: {e.err}')
+      continue
+
+    try:
+      cfg.copy_certs()
+    except subprocess.CalledProcessError:
+      LOG.error(f'{cfg.certdir} reload command failed')
+      continue
+    except CopyError as e:
+      LOG.error(f'copy error: {e.err}')
+      continue
+
+
+if __name__ == '__main__':
+  main()
+

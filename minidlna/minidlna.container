@@ -1,0 +1,29 @@
+[Unit]
+Description=minidlna
+
+[Container]
+ContainerName=minidlna
+Image=oci-archive:/srv/images/minidlna.oci
+Pull=newer
+# Storage: container image is ro except /run
+ReadOnly=true
+ReadOnlyTmpfs=true
+Volume=/data:/media:ro
+Volume=/srv/minidlna/conf:/etc/minidlna:ro
+Volume=/srv/minidlna/cache:/var/cache/minidlna:rw
+# Network; host network namespace is required for multicast
+Network=host
+# System integration
+# map root uid/gid 0 -> 65534 (nobody) on host
+UIDMap=0:65534:1
+GIDMap=0:65534:1
+# map nonroot uid/gid 65532 -> 8200 (minidlna) on host
+UIDMap=65532:8200:1
+GIDMap=65532:8200:1
+
+[Service]
+Restart=always
+
+[Install]
+# Start by default on boot
+WantedBy=multi-user.target default.target

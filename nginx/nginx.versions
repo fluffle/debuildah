@@ -1,0 +1,7 @@
+libcrypt1=1:4.4.38-1
+libgcc-s1=14.2.0-19
+libnginx-mod-http-echo=1:0.63-7
+libpcre2-8-0=10.46-1~deb13u1
+nginx=1.26.3-3+deb13u2
+nginx-common=1.26.3-3+deb13u2
+nginx-light=1.26.3-3+deb13u2

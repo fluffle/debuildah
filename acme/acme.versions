@@ -1,0 +1,16 @@
+acme.sh=3.1.1-1
+libffi8=3.4.8-2
+libgcc-s1=14.2.0-19
+libgmp10=2:6.3.0+dfsg-3
+libgnutls30t64=3.8.9-3+deb13u2
+libhogweed6t64=3.10.1-1
+libidn2-0=2.3.8-2
+libnettle8t64=3.10.1-1
+libp11-kit0=0.25.5-3
+libpcre2-8-0=10.46-1~deb13u1
+libpsl5t64=0.21.2-1.1+b1
+libtasn1-6=4.20.0-2
+libunistring5=1.3-2
+libuuid1=2.41-5
+openssl=3.5.5-1~deb13u1
+wget=1.25.0-2

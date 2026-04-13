@@ -1,0 +1,32 @@
+[Unit]
+Description=NSD
+
+[Container]
+ContainerName=nsd
+# Pull newer versions of the copied image archive when restarting
+Image=oci-archive:/srv/images/nsd.oci
+Pull=newer
+# Storage: container image is ro except /run and zones volume
+ReadOnly=true
+ReadOnlyTmpfs=true
+Volume=/srv/nsd/conf.d:/etc/nsd/nsd.conf.d:ro
+Volume=/srv/nsd/zones:/etc/nsd/zones:rw
+# Network; note use of high port inside container
+Network=podman-v6.network
+PublishPort=53:5353/tcp
+PublishPort=53:5353/udp
+# System integration
+# map root uid/gid 0 -> 65534 (nobody) on host
+UIDMap=0:65534:1
+GIDMap=0:65534:1
+# map nonroot uid/gid 65532 -> 53 (nsd) on host
+UIDMap=65532:53:1
+GIDMap=65532:53:1
+# Needs newer podman version than the one in trixie.
+# ReloadSignal=SIGHUP
+
+[Service]
+Restart=always
+
+[Install]
+WantedBy=multi-user.target default.target

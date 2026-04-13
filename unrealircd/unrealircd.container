@@ -1,0 +1,34 @@
+[Unit]
+Description=UnrealIRCd
+
+[Container]
+ContainerName=unrealircd
+# Pull newer versions of the copied image archive when restarting
+Image=oci-archive:/srv/images/unrealircd.oci
+Pull=newer
+# Storage: container image is ro except /run
+ReadOnly=true
+ReadOnlyTmpfs=true
+Volume=/srv/irc/conf:/srv/irc/conf:ro
+Volume=/srv/irc/certs.d:/srv/irc/certs.d:ro
+# Network, yay IPv6
+Network=podman-v6.network
+PublishPort=6667:6667/tcp
+PublishPort=6697:6697/tcp
+PublishPort=7011:7011/tcp
+# System integration
+# map root uid/gid 0 -> 65534 (nobody) on host
+UIDMap=0:65534:1
+GIDMap=0:65534:1
+# map nonroot uid/gid 65532 -> 39 (irc) on host
+UIDMap=65532:39:1
+GIDMap=65532:39:1
+# Needs newer podman version I think?
+# ReloadSignal=SIGHUP
+
+
+[Service]
+Restart=always
+
+[Install]
+WantedBy=multi-user.target default.target

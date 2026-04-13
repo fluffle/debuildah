@@ -1,0 +1,30 @@
+[Unit]
+Description=Run acme.sh
+After=network-online.target
+
+[Container]
+ContainerName=acme
+# Pull newer versions of the copied image archive when restarting
+Image=oci-archive:/srv/images/acme.oci
+Pull=newer
+Exec=--cron
+# Storage: container image is ro except /run and /srv/acme volume
+ReadOnly=true
+ReadOnlyTmpfs=true
+Volume=/srv/acme:/srv/acme:rw
+# Network; runs once per day from timer and needs external connectivity.
+Network=host
+# System integration
+# map root uid/gid 0 -> 65534 (nobody) on host
+UIDMap=0:65534:1
+GIDMap=0:65534:1
+# map nonroot uid/gid 65532 -> 443 (acme) on host
+UIDMap=65532:443:1
+GIDMap=65532:443:1
+# Needs newer podman version I think?
+# ReloadSignal=SIGHUP
+
+
+[Service]
+Type=oneshot
+ExecStartPost=/srv/acme/install-certs --apply

@@ -1,0 +1,7 @@
+libcap2=1:2.75-10+b8
+libevent-2.1-7t64=2.1.12-stable-10+b1
+libfstrm0=0.6.1-1+b3
+libgcc-s1=14.2.0-19
+libprotobuf-c1=1.5.1-1
+libsystemd0=257.9-1~deb13u1
+nsd=4.12.0-1

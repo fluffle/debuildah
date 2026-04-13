@@ -1,0 +1,8 @@
+libargon2-1=0~20190702+dfsg-4+b2
+libcares2=1.34.5-1+deb13u1
+libcrypt1=1:4.4.38-1
+libgcc-s1=14.2.0-19
+libjansson4=2.14-2+b3
+libpcre2-8-0=10.46-1~deb13u1
+libsodium23=1.0.18-1+deb13u1
+unrealircd=6.2.3
