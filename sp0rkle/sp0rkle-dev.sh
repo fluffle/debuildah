@@ -65,7 +65,6 @@ busybox
 declare -a args=(
   "/srv/sp0rkle/bin/sp0rkle"
   "--ssl"
-  "--bolt_only"
   "--boltdb"
   "/srv/sp0rkle/db/sp0rkle.boltdb"
   "--backup_dir"
