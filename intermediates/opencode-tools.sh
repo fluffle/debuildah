@@ -20,7 +20,7 @@ buildah run --network host "$id" -- sh -c '
         python3 python3-pip python3-yaml \
         golang-go \
         build-essential gdb \
-        nodejs npm \
+        nodejs node-typescript node-tslib npm \
         sqlite3 \
         ;
     mkdir -p /workspace;
