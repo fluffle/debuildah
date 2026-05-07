@@ -10,7 +10,7 @@ buildah run --network host "$id" -- sh -c '
         git git-man \
         curl \
         jq \
-        bash \
+        bash less strace \
         bsdutils bsdextrautils \
         coreutils diffutils findutils util-linux \
         grep ripgrep \
@@ -22,6 +22,7 @@ buildah run --network host "$id" -- sh -c '
         build-essential gdb \
         nodejs node-typescript node-tslib npm \
         sqlite3 \
+        mdformat \
         ;
     mkdir -p /workspace;
     chown -R nobody:nogroup /workspace;
