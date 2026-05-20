@@ -12,5 +12,5 @@ libpsl5t64=0.21.2-1.1+b1
 libtasn1-6=4.20.0-2
 libunistring5=1.3-2
 libuuid1=2.41-5
-openssl=3.5.5-1~deb13u1
+openssl=3.5.5-1~deb13u2
 wget=1.25.0-2

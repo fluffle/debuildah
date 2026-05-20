@@ -16,13 +16,13 @@ buildah run --network host "$id" -- sh -c '
         grep ripgrep \
         sed mawk \
         zip unzip tar gzip bzip2 xz-utils \
-        perl \
         python3 python3-pip python3-yaml \
         golang-go \
         build-essential gdb \
         nodejs node-typescript node-tslib npm \
         sqlite3 \
         mdformat \
+        vim kitty-terminfo \
         ;
     mkdir -p /workspace;
     chown -R nobody:nogroup /workspace;
