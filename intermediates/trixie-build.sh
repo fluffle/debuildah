@@ -4,7 +4,7 @@
 # Do all builds as nobody:nogroup.
 
 id="$(buildah from --pull docker.io/library/debian:trixie)"
-buildah run --network host "$id" -- sh -c '
+buildah run --env "DEBIAN_FRONTEND=noninteractive" --network host "$id" -- sh -c '
     apt-get update;
     apt-get dist-upgrade;
     apt-get -y --no-install-recommends install \

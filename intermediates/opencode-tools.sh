@@ -3,7 +3,7 @@
 # Create a local debian image based on sid for running opencode in.
 
 id="$(buildah from --pull docker.io/library/debian:sid)"
-buildah run --network host "$id" -- sh -c '
+buildah run --env "DEBIAN_FRONTEND=noninteractive" --network host "$id" -- sh -c '
     apt-get update;
     apt-get -y dist-upgrade;
     apt-get -y --no-install-recommends install \
@@ -22,8 +22,10 @@ buildah run --network host "$id" -- sh -c '
         nodejs node-typescript node-tslib npm \
         sqlite3 \
         mdformat \
-        vim kitty-terminfo \
+        ffmpeg \
+        vim tmux kitty-terminfo \
         ;
+    apt-get -y clean;
     mkdir -p /workspace;
     chown -R nobody:nogroup /workspace;
 '

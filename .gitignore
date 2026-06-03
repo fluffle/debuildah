@@ -1,3 +1,4 @@
 .*.swp
 *.oci
 unrealircd/unrealircd-*.tar.gz
+cgt-calc/*.tar.gz

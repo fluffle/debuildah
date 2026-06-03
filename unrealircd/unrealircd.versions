@@ -5,4 +5,4 @@ libgcc-s1=14.2.0-19
 libjansson4=2.14-2+b3
 libpcre2-8-0=10.46-1~deb13u1
 libsodium23=1.0.18-1+deb13u1
-unrealircd=6.2.4
+unrealircd=6.2.5

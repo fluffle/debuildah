@@ -174,3 +174,21 @@ entrypoint() {
   done
   printf ']'
 }
+
+sha256_check() {
+  echo "${2}  ${1}" | sha256sum --status --check -
+}
+
+dl_check_binary() {
+  local url="$1"
+  local tar="$2"
+  local sum="$3"
+
+  if [ ! -f "${tar}" ] || ! sha256_check "${tar}" "${sum}"; then
+    wget -O "${tar}" "${url}"
+    if ! sha256_check "${tar}" "${sum}"; then
+      echo "${tar}: checksum mismatch"
+      exit 1
+    fi
+  fi
+}

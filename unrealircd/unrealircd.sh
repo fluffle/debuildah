@@ -4,8 +4,8 @@ set -e
 
 . "$(git rev-parse --show-toplevel)/debuildah"
 
-VERSION="6.2.4"
-SHASUM="3e3ea1edd0ade91cd49ef1a4aed479f82dfa722b7dffb9ebd5e54d2baee84b19"
+VERSION="6.2.5"
+SHASUM="136854437d9b34b7f83a2d8227a8aae7cda505dd3db8c5e70f711eecf494be2c"
 TAR="unrealircd-${VERSION}.tar.gz"
 URL="https://www.unrealircd.org/downloads/${TAR}"
 
@@ -127,3 +127,8 @@ buildah config \
 
 popd
 commit "$run_id" "unrealircd" "$VERSION"
+
+echo "***------------------------------------------------***"
+echo "*** DON'T FORGET TO OVERWRITE modules.default.conf ***"
+echo "***  (because unreal is stoopid about versioning)  ***"
+echo "***------------------------------------------------***"
