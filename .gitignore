@@ -3,3 +3,7 @@
 unrealircd/unrealircd-*.tar.gz
 cgt-calc/*.tar.gz
 llama/*.tar.gz
+gtnh/*.zip
+# Ugh don't commit passwords to github.
+gtnh/ae2webintegration/ae2_web_password
+gtnh/ae2webintegration/webdata.json

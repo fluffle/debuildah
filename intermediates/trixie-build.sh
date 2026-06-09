@@ -3,7 +3,7 @@
 # Create a local debian image suitable for building a source .tar.gz.
 # Do all builds as nobody:nogroup.
 
-id="$(buildah from --pull docker.io/library/debian:trixie)"
+id="$(buildah from --pull=newer docker.io/library/debian:trixie)"
 buildah run --env "DEBIAN_FRONTEND=noninteractive" --network host "$id" -- sh -c '
     apt-get update;
     apt-get -y dist-upgrade;

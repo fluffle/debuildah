@@ -9,7 +9,7 @@ run_id="$(buildah from opencode-tools:sid)"
 run_dir="$(buildah mount "$run_id")"
 
 # Download and install tuicr (https://github.com/agavra/tuicr)
-TUICR_VER="0.15.0"
+TUICR_VER="0.17.1"
 TUICR="https://github.com/agavra/tuicr/releases/download/v${TUICR_VER}/tuicr-${TUICR_VER}-x86_64-unknown-linux-gnu.tar.gz"
 wget -q -O- "${TUICR}" | tar -zxvf -
 install -o root -g root -m 0755 ./tuicr "${run_dir}/usr/local/bin/tuicr" && rm ./tuicr

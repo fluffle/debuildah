@@ -126,7 +126,15 @@ filter_base_deps() {
 # working containers are built on top of distroless/base-debian13.
 from_base() {
   local tag="${1:-latest}"
-  local ctr="$(buildah from --pull "gcr.io/distroless/base-debian13:${tag}")"
+  local ctr="$(buildah from --pull=newer "gcr.io/distroless/base-debian13:${tag}")"
+  echo "$ctr"
+}
+
+# from_java creates a new working container and returns its id.
+# working containers are built on top of distroless/java25-debian13.
+from_java() {
+  local tag="${1:-latest}"
+  local ctr="$(buildah from --pull=newer "gcr.io/distroless/java25-debian13:${tag}")"
   echo "$ctr"
 }
 

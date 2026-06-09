@@ -2,7 +2,7 @@
 
 # Create a local debian image based on sid for running opencode in.
 
-id="$(buildah from --pull docker.io/library/debian:sid)"
+id="$(buildah from --pull=newer docker.io/library/debian:sid)"
 buildah run --env "DEBIAN_FRONTEND=noninteractive" --network host "$id" -- sh -c '
     apt-get update;
     apt-get -y dist-upgrade;

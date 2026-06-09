@@ -44,7 +44,7 @@ install_files() {
 }
 
 # Build sp0rkle from local sources.
-build_id="$(buildah from docker.io/library/golang:trixie)"
+build_id="$(buildah from --pull=newer docker.io/library/golang:trixie)"
 build_srcs "$build_id"
 
 run_id="$(from_base nonroot)"
