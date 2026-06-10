@@ -1,0 +1,17 @@
+[
+  {
+    "name": "tps",
+    "command": "cofh tps",
+    "broadcastResult": true,
+    "runAsOp": true,
+    "requireAuth": false,
+    "allowArgs": false,
+    "outputFilter": "Dimension 0:.+",
+    "description": "Broadcasts the current TPS to the channel, filtering the output for the overworld only."
+  },
+  {
+    "name": "players",
+    "override": "who",
+    "description": "Default alias players for the who command."
+  }
+]

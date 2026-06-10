@@ -1,0 +1,24 @@
+[
+  {
+    "address": "unrealircd.dns.podman",
+    "serverPassword": "",
+    "nick": "gtnh",
+    "charset": "UTF-8",
+    "isRedirect": false,
+    "isSSL": false,
+    "channels": [{"name": "#minecraft"}],
+    "bot": {
+      "botProfile": "Server",
+      "ident": "gtnh",
+      "description": "minecraft<->IRC bridge",
+      "quitMessage": "aaargh the server died",
+      "relayDeathMessages": true,
+      "relayMinecraftJoinLeave": true,
+      "relayAchievements": true,
+      "allowPrivateMessage": false
+    },
+    "settings": {
+      "autoJoin": true
+    }
+  }
+]

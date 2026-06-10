@@ -100,6 +100,10 @@ modify_configs() {
     ae2webintegration/webdata.json
   sed -i "s/__PASSWORD__/${AE2_WEB_PASSWORD}/" \
     "${cfg}/ae2webintegration/ae2webintegration.cfg"
+  # EiraIRC
+  install -o 65532 -g 65532 -m 0755 -d "${cfg}/eirairc"
+  install -o 65532 -g 65532 -m 0644 -t "${cfg}/eirairc" \
+    eirairc/*.cfg eirairc/*.json
 
   # Accept EULA
   sed -i 's/false/true/' "${to}/eula.txt"
