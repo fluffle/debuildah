@@ -20,6 +20,7 @@ buildah run --env "DEBIAN_FRONTEND=noninteractive" --network host "$id" -- sh -c
         golang-go \
         build-essential gdb \
         nodejs node-typescript node-tslib npm \
+        openjdk-25-jdk-headless gradle \
         sqlite3 \
         mdformat \
         ffmpeg \
