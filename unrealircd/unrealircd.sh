@@ -4,8 +4,8 @@ set -e
 
 . "$(git rev-parse --show-toplevel)/debuildah"
 
-VERSION="6.2.5"
-SHASUM="136854437d9b34b7f83a2d8227a8aae7cda505dd3db8c5e70f711eecf494be2c"
+VERSION="6.2.7"
+SHASUM="e075375f469309bf1d54134bc914ec50a4ae3b09da6d2db2c11f9fa88d649370"
 TAR="unrealircd-${VERSION}.tar.gz"
 URL="https://www.unrealircd.org/downloads/${TAR}"
 

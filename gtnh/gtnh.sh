@@ -5,16 +5,15 @@ set -e
 . "$(git rev-parse --show-toplevel)/debuildah"
 . "./ae2webintegration/ae2_web_password"
 
-VERSION="2.9.0-beta-3"
+VERSION="2.9.0"
 ZIP="GT_New_Horizons_${VERSION}_Server_Java_17-26.zip"
-URL="https://downloads.gtnewhorizons.com/ServerPacks/betas/${ZIP}"
+URL="https://downloads.gtnewhorizons.com/ServerPacks/${ZIP}"
 
 declare -a MOD_URLS=(
   "https://github.com/GTNewHorizons/worldedit-gtnh/releases/download/v0.0.10/worldedit-v0.0.10.jar"
   "https://github.com/GTNewHorizons/spark/releases/download/v0.0.16/spark-forge1710-1.10-SNAPSHOT.jar"
   "https://github.com/GTNewHorizons/SharedProspecting/releases/download/2.0.5/sharedprospecting-2.0.5.jar"
-  "https://github.com/GTNewHorizons/GTNH-Web-Map/releases/download/0.4-beta-1/gtnh-web-map-0.4-beta-1.jar"
-  "https://github.com/kuba6000/AE2-Web-Integration/releases/download/1.1.0-forge-pre-1.7.10/ae2webintegration-1.1.0-forge-pre-1.7.10.jar"
+  "https://github.com/kuba6000/AE2-Web-Integration/releases/download/2.0.0-forge-1.7.10/ae2webintegration-2.0.0-forge-1.7.10.jar"
 )
 
 write_versions gtnh "${pkgs[@]}"
