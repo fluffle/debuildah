@@ -5,17 +5,16 @@ set -e
 . "$(git rev-parse --show-toplevel)/debuildah"
 . "./ae2webintegration/ae2_web_password"
 
-VERSION="2.9.0-beta-1"
-ZIP="GT_New_Horizons_${VERSION}_Server_Java_17-25.zip"
+VERSION="2.9.0-beta-3"
+ZIP="GT_New_Horizons_${VERSION}_Server_Java_17-26.zip"
 URL="https://downloads.gtnewhorizons.com/ServerPacks/betas/${ZIP}"
 
 declare -a MOD_URLS=(
-  "https://github.com/GTNewHorizons/worldedit-gtnh/releases/download/v0.0.9/worldedit-v0.0.9.jar"
-  "https://github.com/GTNewHorizons/spark/releases/download/v0.0.16-pre/spark-forge1710-1.10-SNAPSHOT.jar"
-  "https://github.com/kuba6000/AE2-Web-Integration/releases/download/1.0.3-GTNH-Native-Fluids-Support-forge-pre-1.7.10/ae2webintegration-1.0.3-GTNH-Native-Fluids-Support-forge-pre-1.7.10.jar"
+  "https://github.com/GTNewHorizons/worldedit-gtnh/releases/download/v0.0.10/worldedit-v0.0.10.jar"
+  "https://github.com/GTNewHorizons/spark/releases/download/v0.0.16/spark-forge1710-1.10-SNAPSHOT.jar"
   "https://github.com/GTNewHorizons/SharedProspecting/releases/download/2.0.5/sharedprospecting-2.0.5.jar"
-  "https://github.com/GTNewHorizons/GTNH-Web-Map/releases/download/0.3.47/gtnh-web-map-0.3.47.jar"
-  "https://github.com/GTNewHorizons/Foreman/releases/download/0.5.0/foreman-0.5.0.jar"
+  "https://github.com/GTNewHorizons/GTNH-Web-Map/releases/download/0.4-beta-1/gtnh-web-map-0.4-beta-1.jar"
+  "https://github.com/kuba6000/AE2-Web-Integration/releases/download/1.1.0-forge-pre-1.7.10/ae2webintegration-1.1.0-forge-pre-1.7.10.jar"
 )
 
 write_versions gtnh "${pkgs[@]}"
@@ -104,6 +103,10 @@ modify_configs() {
   install -o 65532 -g 65532 -m 0755 -d "${cfg}/eirairc"
   install -o 65532 -g 65532 -m 0644 -t "${cfg}/eirairc" \
     eirairc/*.cfg eirairc/*.json
+  # JourneyMap -- need static world UUID
+  install -o 65532 -g 65532 -m 0755 -d "${cfg}/JourneyMapServer"
+  install -o 65532 -g 65532 -m 0644 -t "${cfg}/JourneyMapServer" \
+    JourneyMapServer/*.cfg
 
   # Accept EULA
   sed -i 's/false/true/' "${to}/eula.txt"
